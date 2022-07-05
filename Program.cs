@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using auth.Services;
+using auth.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +40,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 });
 
 builder.Services.AddSingleton<IMailService, MailService>();
+builder.Services.AddSingleton<IAuthRepository, AuthRepository>();
+builder.Services.AddSingleton<auth.Utilities.IUtility, auth.Utilities.Utility>();
+
 
 var app = builder.Build();
 
@@ -49,50 +53,49 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.Use(async (context, next) => {
-    Console.WriteLine("I am middleware");
+// app.Use(async (context, next) => {
+//     Console.WriteLine("I am middleware");
 
-    // to get refresh token from header 
-    // context.Request.Cookies.TryGetValue("nekot", out var refreshToken);
+//     // to get refresh token from header 
+//     // context.Request.Cookies.TryGetValue("nekot", out var refreshToken);
 
-    try
-    {
-        var accessToken = context.Request.Headers["Authorization"][0].Replace("Bearer ", "");
-        if (accessToken != null)
-        {
-            var userId = new JwtSecurityTokenHandler()
-                .ReadJwtToken(accessToken)
-                .Claims.FirstOrDefault(claim => claim.Type == "Id")
-                .Value;
-            // Console.WriteLine(accessToken);
-            // Console.WriteLine(userId);
-            var currentCookie = context.Request.Cookies["userId"];
-            // Console.Write(currentCookie);
-            if (currentCookie != userId)
-            {
-                Console.WriteLine(true);
-                var cookieOptions = new CookieOptions
-                {
-                    HttpOnly = true,
-                    Expires = DateTime.Now.AddDays(7)
-                };
-                context.Response.Cookies.Append("userId", userId, cookieOptions);
-            }
-        }
-    }
-    catch
-    {
+//     try
+//     {
+//         var accessToken = context.Request.Headers["Authorization"][0].Replace("Bearer ", "");
+//         if (accessToken != null)
+//         {
+//             var userId = new JwtSecurityTokenHandler()
+//                 .ReadJwtToken(accessToken)
+//                 .Claims.FirstOrDefault(claim => claim.Type == "Id")
+//                 .Value;
+//             // Console.WriteLine(accessToken);
+//             // Console.WriteLine(userId);
+//             var currentCookie = context.Request.Cookies["userId"];
+//             // Console.Write(currentCookie);
+//             if (currentCookie != userId)
+//             {
+//                 Console.WriteLine(true);
+//                 var cookieOptions = new CookieOptions
+//                 {
+//                     HttpOnly = true,
+//                     Expires = DateTime.Now.AddDays(7)
+//                 };
+//                 context.Response.Cookies.Append("userId", userId, cookieOptions);
+//             }
+//         }
+//     }
+//     catch
+//     {
         
-    }
-    await next(context);
-});
+//     }
+//     await next(context);
+// });
 
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
 
 app.UseAuthorization();
-
 
 app.MapControllers();
 
